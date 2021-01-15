@@ -12,6 +12,9 @@ from mitmproxy.proxy.config import ProxyConfig
 from mitmproxy.proxy.server import ProxyServer
 from mitmproxy.tools.dump import DumpMaster
 
+# Added 14/01/21, could be useful to read request and response.
+from mitmproxy.net.http.http1.assemble import assemble_request, assemble_response, _assemble_request_headers
+
 # Datetime is useful due to its now() function: it will be used when creating a new file with a request/response
 # intercepted. Without this function we should name a request to the same URI with a progressive number (e.g.
 # localhost_wavsep_1, localhost_wavsep_2, ..., localhost_wavsep_n).
@@ -31,6 +34,7 @@ import json
 # Class myParser is a subclass of HTTPParser of html library.
 from parser import myParser
 
+from myHttpRecord import MyHttpRecord
 
 """
     HTTPInterceptor is the class that defines the addon for mitmproxy.
@@ -79,7 +83,7 @@ class HTTPInterceptor(object):
             # Every intercepted request will be labeled with the name of the resource requested
             # plus the current datetime (YYYY-MM-DD HH:MM:SS.DS).
             data_folder = Path("http_dataset/")
-            current_filename = html_title + '-' + str(datetime.now()) + '.txt'
+            current_filename = html_title + '-' + str(datetime.now()) + '.json'
             file_to_open = data_folder / current_filename
 
             # Create the directory named "http_dataset" with the first usage.
@@ -92,29 +96,24 @@ class HTTPInterceptor(object):
 
             # Just a little syntaptic sugar: could be written without the "with ... as ..."
             # but doing this way the opened file will be closed after the manipulation.
-            with open(file_to_open, "wb") as record:
+            with open(file_to_open, "w") as record:
 
-                record.write(b'--- url ---\n')
-                record.write(flow.request.pretty_url.encode() + b'\n')
+                # --------- MITMPROXY DATA ---------------
+                pretty_url = str(flow.request.pretty_url)
 
-                record.write(b'--- request ---\n')
+                # --------- REQUEST DATA ---------------
+                # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
+                req_headers = dict(flow.request.headers.items())
+                req_content = str(flow.request.content.decode())
 
-                record.write(b'--- headers ---\n')
-                d = dict(flow.request.headers.items())
-                d = json.dumps(d, indent=2)
-                record.write(d.encode() + b'\n')
+                # --------- RESPONSE DATA ---------------
+                # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
+                res_headers = dict(flow.response.headers.items())
+                res_content = str(flow.response.content.decode())
 
-                record.write(b'--- content ---\n')
-                record.write(flow.request.content + b'\n')
-
-                record.write(b'--- response ---\n')
-
-                record.write(b'--- headers ---\n')
-                for key, value in flow.response.headers.items():
-                    record.write('{}: {}\n'.format(key, value).encode())
-
-                record.write(b'--- content ---\n')
-                record.write(flow.response.content + b'\n')
+                # --------- WRITING OPERATIONS ---------------
+                http_record = MyHttpRecord(req_headers, req_content, res_headers, res_content, pretty_url)
+                record.write(http_record.getJSON())
 
 
 if __name__ == "__main__":
