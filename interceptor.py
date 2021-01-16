@@ -27,9 +27,6 @@ from pathlib import Path
 import os
 import errno
 
-# JSON Python library to record request data.
-import json
-
 # Used to parse html content of the http_response and to get the title.
 # Class myParser is a subclass of HTTPParser of html library.
 from parser import myParser
@@ -98,39 +95,27 @@ class HTTPInterceptor(object):
             # but doing this way the opened file will be closed after the manipulation.
             with open(file_to_open, "w") as record:
 
-                # --------- MITMPROXY DATA ---------------
-                pretty_url = str(flow.request.pretty_url)
-
-                # --------- REQUEST DATA ---------------
-                # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
-                req_headers = dict(flow.request.headers.items())
-                req_content = str(flow.request.content.decode())
-
-                # --------- RESPONSE DATA ---------------
-                # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
-                res_headers = dict(flow.response.headers.items())
-                res_content = str(flow.response.content.decode())
-
-                # --------- WRITING OPERATIONS ---------------
-                http_record = MyHttpRecord(req_headers, req_content, res_headers, res_content, pretty_url)
+                # MyHttpRecord constructor will extract all the data from flow object.
+                # Doing so the code will result cleaner to read.
+                http_record = MyHttpRecord(flow)
                 record.write(http_record.getJSON())
 
 
 if __name__ == "__main__":
-    ################### START MITMPROXY AND TOMCAT VARIABLES ###################
+    ################### START MITMPROXY AND BENCHMARK DEFAULT VARIABLES ###################
 
     # Variables to identify ports and addresses of mitmproxy and wavsep's tomcat.
     mitm_port = 8888
-    mitm_host = '127.0.0.1'
-    tomcat_port = 8080
-    tomcat_host = '127.0.0.1'
+    mitm_url = '127.0.0.1'
+    benchmark_port = 8080
+    benchmark_url = "127.0.0.1"
     # Building mitmproxy_mode string on the fly to made it simple to modify.
-    mitmproxy_mode = 'reverse' + ':' + 'http://' + str(tomcat_host) + ':' + str(tomcat_port)
+    mitmproxy_default_mode = 'reverse' + ':' + 'http://' + str(benchmark_url) + ':' + str(benchmark_port)
 
-    ################### END MITMPROXY AND TOMCAT VARIABLES ###################
+    ################### END MITMPROXY AND BENCHMARK VARIABLES ###################
 
     # Options to set up Mitmproxy as reverse proxy to Tomcat (default port 8080)
-    options = Options(listen_host=mitm_host, listen_port=mitm_port, http2=True, mode=mitmproxy_mode)
+    options = Options(listen_host=mitm_url, listen_port=mitm_port, http2=True, mode=mitmproxy_default_mode)
     # DumpMaster instance: "with_termolog" option set to true to see logs on terminal.
     m = DumpMaster(options, with_termlog=True, with_dumper=False)
     config = ProxyConfig(options)
