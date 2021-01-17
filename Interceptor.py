@@ -1,6 +1,6 @@
 # Author: Marco Urbano.
 # Date: 8 January 2021.
-# Description: this is a sample Python script to run mitmproxy.
+# Description: this is a simple Python script that uses mitmproxy to record http request/responses.
 # Notes:
 #           To run mitmproxy directly from Python:
 #           - https://stackoverflow.com/questions/51893788/using-mitmproxy-inside-python-script
@@ -31,7 +31,13 @@ import errno
 # Class myParser is a subclass of HTTPParser of html library.
 from parser import myParser
 
-from myHttpRecord import MyHttpRecord
+# Used to read command line arguments with argv.
+import sys
+
+# Used to handle the command line arguments. (utility is a file of this project, not a Python official library)
+import utility
+
+from MyHttpRecord import MyHttpRecord
 
 """
     HTTPInterceptor is the class that defines the addon for mitmproxy.
@@ -50,6 +56,7 @@ class HTTPInterceptor(object):
 
     # Uncomment if is needed to trigger some event when a request is intercepted.
     #def request(self, flow):
+    # do something here.
 
 
     # When handling a response we need to read not only the headers, but most importantly we
@@ -105,18 +112,30 @@ if __name__ == "__main__":
     ################### START MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES ###################
 
     # Variables to identify ports and addresses of mitmproxy and wavsep's tomcat.
-    mitm_port = 8888
-    mitm_url = '127.0.0.1'
+    proxy_port = 8888
+    proxy_host = '127.0.0.1'
     benchmark_port = 8080
-    benchmark_url = "127.0.0.1"
+    benchmark_host = '127.0.0.1'
     # Building mitmproxy_mode string on the fly to made it simple to modify.
-    mitmproxy_default_mode = 'reverse' + ':' + 'http://' + str(benchmark_url) + ':' + str(benchmark_port)
+    mitmproxy_mode = 'reverse' + ':' + 'http://' + str(benchmark_host) + ':' + str(benchmark_port)
 
     ################### END MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES #####################
 
+    # Reading command line arguments (if there any)
+    cmd_arg = len(sys.argv)
+    if cmd_arg > 1:
+        # If the syntax is correct, change default variable values to custom ones.
+        if(utility.check_arguments(sys.argv)):
+            mitm_host = sys.argv[3]
+            mitm_port = sys.argv[5]
+            benchmark_host = sys.argv[7]
+            benchmark_port = sys.argv[9]
+
+
+
 
     # Options to set up Mitmproxy as reverse proxy to Tomcat (default port 8080)
-    options = Options(listen_host=mitm_url, listen_port=mitm_port, http2=True, mode=mitmproxy_default_mode)
+    options = Options(listen_host=proxy_host, listen_port=proxy_port, http2=True, mode=mitmproxy_mode)
     # DumpMaster instance: "with_termolog" option set to true to see logs on terminal.
     m = DumpMaster(options, with_termlog=True, with_dumper=False)
     config = ProxyConfig(options)

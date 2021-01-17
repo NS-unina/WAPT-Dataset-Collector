@@ -3,7 +3,7 @@
 # Description: myHttpRecord is a simple object that can be used both for the request and response
 #              to store headers and content intercepted by mitmproxy and to return a JSON object to be saved.
 # Notes:
-#           - The idea to create a class with a method that make JSONable a complex object was found there:
+#           - The idea to create a class with a method that make JSONable a complex object was found here:
 #               https://stackoverflow.com/questions/3768895/how-to-make-a-class-json-serializable/15538391
 #           - Other interesting tips:
 #               * https://github.com/simplejson/simplejson/issues/52#issuecomment-23667961
@@ -19,7 +19,7 @@ class MyHttpRecord:
         # --------- REQUEST DATA ---------------
         self.req_headers: dict
         self.req_content: str
-        self.req.param: None
+        self.req_param: None
         # Response data
         self.res_headers: dict
         self.res_content: str
