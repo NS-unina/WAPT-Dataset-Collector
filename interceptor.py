@@ -62,10 +62,10 @@ class HTTPInterceptor(object):
         # To know more about Variable Annotation see: https://www.python.org/dev/peps/pep-0526/
         url_request: str = str(flow.request.pretty_url)
 
-
-        """DA CONTROLLARE SE SI PUO' OMETTERE IL CONTROLLO SU /STATIC.
+        """
+            ISSUE: CHECK IF THE IF STATEMENT ON STATIC CAN BE OMITTED.
            
-           Marco, 10/01/2020 23.39
+            Marco, 10/01/2020 23.39
         """
         if '/static/' not in url_request:
             # Uncomment to use the url as the name of the recorded http response.
@@ -73,7 +73,7 @@ class HTTPInterceptor(object):
 
             # Invoking parser to obtain html document title.
             html_parser = myParser()
-            html_content = (flow.response.content).decode()
+            html_content = flow.response.content.decode()
             html_parser.feed(html_content)
             html_title = html_parser.get_title()
 
@@ -102,7 +102,7 @@ class HTTPInterceptor(object):
 
 
 if __name__ == "__main__":
-    ################### START MITMPROXY AND BENCHMARK DEFAULT VARIABLES ###################
+    ################### START MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES ###################
 
     # Variables to identify ports and addresses of mitmproxy and wavsep's tomcat.
     mitm_port = 8888
@@ -112,7 +112,8 @@ if __name__ == "__main__":
     # Building mitmproxy_mode string on the fly to made it simple to modify.
     mitmproxy_default_mode = 'reverse' + ':' + 'http://' + str(benchmark_url) + ':' + str(benchmark_port)
 
-    ################### END MITMPROXY AND BENCHMARK VARIABLES ###################
+    ################### END MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES #####################
+
 
     # Options to set up Mitmproxy as reverse proxy to Tomcat (default port 8080)
     options = Options(listen_host=mitm_url, listen_port=mitm_port, http2=True, mode=mitmproxy_default_mode)

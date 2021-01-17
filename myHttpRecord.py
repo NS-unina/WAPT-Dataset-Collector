@@ -19,7 +19,7 @@ class MyHttpRecord:
         # --------- REQUEST DATA ---------------
         self.req_headers: dict
         self.req_content: str
-
+        self.req.param: None
         # Response data
         self.res_headers: dict
         self.res_content: str
@@ -36,20 +36,22 @@ class MyHttpRecord:
         self.req_content = str(flow.request.content.decode())
 
         """
-            ISSUE 16/01/21: when the intercepted request method is POST the parameters are returned into the
-                            flow.request.content field with the form:
-                            
-                                            param1=param1_content
-                            
-                            this string must be managed to be converted as dict, just as the case of a GET request.
-                            
+            mitmproxy treats differently GET and POST requests. 
+            
+            The first ones will have their own parameters contained into the URL and to get them you will only
+            need to call the _get_query() method from Request class.
+            
+            The latter ones will have their own parameters contained into the 'content' field of the same class.
+            To extract the parameters contained into a POST request you need to call the urlencoded_form() method
+            that returns a MultiDictView object. Finally this needs to be converted as a dict to be serialized as
+            JSON.
         """
-        #if flow.request.method == "POST":
-        #    self.req_param = tuple((str(flow.request.content.decode())).replace('=', ':'))
-        #else:
-
-        # get request parameters (mitmproxy gets it as tuple)
-        self.req_param = flow.request._get_query()
+        if flow.request.method == "POST":
+            # urlencoded_form returns a MultiDictView object.
+            self.req_param = dict(flow.request.urlencoded_form)
+        else:
+            # _get_query returns a tuple.
+            self.req_param = dict(flow.request._get_query())
 
         # --------- RESPONSE DATA ---------------
         # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
@@ -64,7 +66,7 @@ class MyHttpRecord:
         # Building an on-the-fly dictionary to make this object JSON serializable.
         dictRecord = {
                         "Url": self.pretty_url,
-                        "Request": {"Headers": self.req_headers, "Content": self.req_content, "Parameters": dict(self.req_param)},
+                        "Request": {"Headers": self.req_headers, "Content": self.req_content, "Parameters": self.req_param},
                         "Response": {"Headers": self.res_headers, "Content": self.res_content}
                      }
         # Passing the dictionary built on the fly because it is serializable.
