@@ -18,7 +18,7 @@
     Interceptor.py(1) -ph(2) PROXY_HOST(3) -pp(4) PROXY_PORT(5) -bh(6) BENCHMARK_HOST(7) -bp(8) BENCHMARK_PORT(9)
 
     checkArguments does only a check on the 2nd, 4th, 6th, 8th position to assure that the user knows the name
-    of the parameters to pass to the script. The correctness of the remaining will be assumed the first check is
+    of the parameters to pass to the script. The correctness of the remaining will be assumed if the first check is
     passed.
     """
 

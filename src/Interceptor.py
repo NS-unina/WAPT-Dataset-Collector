@@ -130,6 +130,8 @@ if __name__ == "__main__":
             mitm_port = sys.argv[5]
             benchmark_host = sys.argv[7]
             benchmark_port = sys.argv[9]
+        else:
+            print("Wrong syntax detected. Running the script with default parameters...")
 
 
 

@@ -19,7 +19,7 @@ class MyHttpRecord:
         # --------- REQUEST DATA ---------------
         self.req_headers: dict
         self.req_content: str
-        self.req_param: None
+        self.req_param: dict
         # Response data
         self.res_headers: dict
         self.res_content: str
@@ -39,7 +39,7 @@ class MyHttpRecord:
             mitmproxy treats differently GET and POST requests. 
             
             The first ones will have their own parameters contained into the URL and to get them you will only
-            need to call the _get_query() method from Request class.
+            need to call the query() method from Request class.
             
             The latter ones will have their own parameters contained into the 'content' field of the same class.
             To extract the parameters contained into a POST request you need to call the urlencoded_form() method
@@ -51,7 +51,7 @@ class MyHttpRecord:
             self.req_param = dict(flow.request.urlencoded_form)
         else:
             # _get_query returns a tuple.
-            self.req_param = dict(flow.request._get_query())
+            self.req_param = dict(flow.request.query)
 
         # --------- RESPONSE DATA ---------------
         # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
