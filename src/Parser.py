@@ -10,7 +10,7 @@
 # plus the datetime.
 from html.parser import HTMLParser
 
-class myParser(HTMLParser):
+class Parser(HTMLParser):
 
 
     def __init__(self):

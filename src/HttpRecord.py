@@ -14,7 +14,7 @@ import json
 import urllib.parse
 import mitmproxy.net.http.url
 
-class MyHttpRecord:
+class HttpRecord:
     def __init__(self):
         # --------- REQUEST DATA ---------------
         self.req_headers: dict

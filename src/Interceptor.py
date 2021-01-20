@@ -29,15 +29,15 @@ import errno
 
 # Used to parse html content of the http_response and to get the title.
 # Class myParser is a subclass of HTTPParser of html library.
-from parser import myParser
+from Parser import Parser
 
 # Used to read command line arguments with argv.
 import sys
 
 # Used to handle the command line arguments. (utility is a file of this project, not a Python official library)
-import utility
+import utilities
 
-from MyHttpRecord import MyHttpRecord
+from HttpRecord import HttpRecord
 
 """
     HTTPInterceptor is the class that defines the addon for mitmproxy.
@@ -79,14 +79,16 @@ class HTTPInterceptor(object):
             #url_request = url_request.replace("/", "_")
 
             # Invoking parser to obtain html document title.
-            html_parser = myParser()
+            html_parser = Parser()
             html_content = flow.response.content.decode()
             html_parser.feed(html_content)
             html_title = html_parser.get_title()
 
+
+            # data_folder will be located outside of the current folder (named src/)
+            data_folder = Path("../http_dataset/")
             # Every intercepted request will be labeled with the name of the resource requested
             # plus the current datetime (YYYY-MM-DD HH:MM:SS.DS).
-            data_folder = Path("http_dataset/")
             current_filename = html_title + '-' + str(datetime.now()) + '.json'
             file_to_open = data_folder / current_filename
 
@@ -104,7 +106,7 @@ class HTTPInterceptor(object):
 
                 # MyHttpRecord constructor will extract all the data from flow object.
                 # Doing so the code will result cleaner to read.
-                http_record = MyHttpRecord(flow)
+                http_record = HttpRecord(flow)
                 record.write(http_record.getJSON())
 
 
@@ -125,7 +127,7 @@ if __name__ == "__main__":
     cmd_arg = len(sys.argv)
     if cmd_arg > 1:
         # If the syntax is correct, change default variable values to custom ones.
-        if(utility.check_arguments(sys.argv)):
+        if(utilities.check_arguments(sys.argv)):
             mitm_host = sys.argv[3]
             mitm_port = sys.argv[5]
             benchmark_host = sys.argv[7]
