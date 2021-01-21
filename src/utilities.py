@@ -26,6 +26,6 @@
 def check_arguments(argv):
     # If argv contains n elements, with n != 9, the user entered wrong arguments.
     if len(argv) == 9:
-        if argv[2] == '-ph' and argv[4] == '-pp' and argv[6] == '-bh' and argv[8] == '-bp': return True
+        if argv[1] == '-ph' and argv[3] == '-pp' and argv[5] == '-bh' and argv[7] == '-bp': return True
 
     return False

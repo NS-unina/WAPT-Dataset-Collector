@@ -2,7 +2,7 @@
 FROM python:3.8
 
 # setting the container working directory.
-WORKDIR /code
+WORKDIR WAPT-Dataset-Collector/code
 
 # copy the dependencies file to the wd.
 COPY dependencies .
@@ -11,7 +11,7 @@ COPY dependencies .
 RUN pip3 install -r dependencies
 
 # copy the content of src directory to the container working directory.
-COPY src/ .
+COPY src .
 
 # run Python code.
-CMD ["python3", "Interceptor.py"]
+ENTRYPOINT ["python3", "Interceptor.py"]
