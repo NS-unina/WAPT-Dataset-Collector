@@ -46,8 +46,8 @@ class HTTPLogger(object):
         self.version = '1.0'
 
     # Uncomment if is needed to trigger some event when a request is intercepted.
-    def request(self, flow):
-        print("request received.")
+    #def request(self, flow):
+    #   print("request received.")
 
     # When handling a response we need to read not only the headers, but most importantly we
     # need to read the content of the message (the html page) because we need to observe what changes

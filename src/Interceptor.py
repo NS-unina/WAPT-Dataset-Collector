@@ -5,6 +5,16 @@
 #           To run mitmproxy directly from Python:
 #           - https://stackoverflow.com/questions/51893788/using-mitmproxy-inside-python-script
 
+#           If this script will be executed in a dockerized environment with a networks that assigns
+#           IP Addresses dynamically, it will probably be the last container to be executed. This
+#           is needed because Interceptor.py needs to know which hosts (with their IP's) will send it
+#           requests and which container runs the Benchmark. To assure that the container that runs this
+#           script is the last one executed check:
+#           - https://medium.com/better-programming/a-look-at-docker-composes-bootup-sequence-1f597049cc65
+#
+#           Docker API reference manual:
+#           - https://docker-py.readthedocs.io/en/stable/api.html#networks
+#
 
 from mitmproxy.options import Options
 from mitmproxy.proxy.config import ProxyConfig
@@ -19,6 +29,15 @@ import utilities
 # Importing the custom addon used to save http requests/responses as JSON.
 from HTTPLogger import *
 
+# Using requests in order to obtain the JSON string describing the network built by host's Docker compose.
+# The request will only be possible if the host's docker socket is shared with the container that
+# runs this script.
+import socket
+
+# regular expressions will be used to obtain the name of every service that will be in execution on the
+# network.
+import re
+
 if __name__ == "__main__":
     ################### START MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES ###################
     # The following default values are intended to be used if the script is gonna be executed on the
@@ -29,14 +48,51 @@ if __name__ == "__main__":
     proxy_host = '127.0.0.1'
     benchmark_port = 8080
     benchmark_host = '127.0.0.1'
+    benchmark_protocol = 'http://'
 
     ################### END MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES #####################
 
     # Reading command line arguments (if there any)
     cmd_arg = len(sys.argv)
     if cmd_arg > 1:
+        # If this script will be executed as Docker container it will do a Docker inspect query to
+        # discover the other hosts (e.g. benchmark or/and any other container that will send it
+        # requests)
+        if sys.argv[1] == '--mode' and sys.argv[2] == 'container':
+            # Services serves as simple list that will hold the name the containers attached to this network.
+            services = []
+            # Containers is a dictionary with key=name, value=IP
+            containers = {}
+
+            # Extracting services/container name from docker-compose.yml
+            # The regex used to find these names is /container_name: .*/
+            # The pharenteses are used to delimit a group.
+            with open(sys.argv[4]) as docker_compose:
+                for line in docker_compose.readlines():
+                    if re.search(r'container_name: (.*)', line):
+                        services.append(re.search(r'container_name: (.*)', line).group(1))
+
+            for service in services:
+                # If --mode=container we'll need to discover the other containers in the same network
+                # that has been built by Docker. To do this we need to at least know the name
+                # of these containers: having these names we simply discover their IP's by using
+                # the DNS.
+                containers[str(service)] = str(socket.gethostbyname(service))
+
+            # The only container that is necessary when this one will be executed is the one named "benchmark".
+            if containers['benchmark']:
+                print("benchmark container found! docker-compose.yml file is well formed.")
+            else:
+                print("docker-compose.yml doesn't contains any container named 'benchmark'. Check it!")
+
+            # Using the dictionary to customize the parameters.
+
+            proxy_host = containers['interceptor']
+            benchmark_host = containers['benchmark']
+
+
         # If the syntax is correct, change default variable values to custom ones.
-        if utilities.check_arguments(sys.argv):
+        elif utilities.check_arguments(sys.argv):
             proxy_host = sys.argv[2]
             proxy_port = sys.argv[4]
             benchmark_host = sys.argv[6]
@@ -45,7 +101,7 @@ if __name__ == "__main__":
             print("Wrong syntax detected. Running the script with default parameters...")
 
     # Building mitmproxy_mode string on the fly to made it simple to modify.
-    mitmproxy_mode = 'reverse' + ':' + 'http://' + str(benchmark_host) + ':' + str(benchmark_port)
+    mitmproxy_mode = 'reverse' + ':' + benchmark_protocol + str(benchmark_host) + ':' + str(benchmark_port)
 
     # Options to set up Mitmproxy as reverse proxy to Tomcat (default port 8080)
     options = Options(listen_host=proxy_host, listen_port=int(proxy_port), http2=True, mode=mitmproxy_mode)

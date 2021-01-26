@@ -1,29 +1,42 @@
-version: '2'
+# If having any issues with the docker network:
+# https://github.com/docker/for-win/issues/2194
+
 services:
-  wavsep:
-    container_name: wavsep
+  interceptor:
+   container_name: interceptor
+   image: interceptor:latest
+   entrypoint: ["python3", "Interceptor.py", "--mode", "container", "--compose", "docker-compose.yml"]
+   
+   # binding host docker sock to this container to send http requests to host's docker engine.
+   # this practise could offer to an attacker the chance to penetrate into the host system:
+   # https://stackoverflow.com/questions/40844197/what-is-the-docker-security-risk-of-var-run-docker-sock 
+   #volumes:
+   #- "/var/run/docker.sock:/var/run/docker.sock"
+   
+   # docker-compose.yml will be employed to make the other containers name known to this one.
+   volumes:
+   - "./docker-compose.yml:/WAPT-Dataset-Collector/code/docker-compose.yml"
+   ports:
+    - "8888:8888"
+   networks:
+     - penetration_net
+   # this enforces docker to build this container after that the others on which it depends.
+   depends_on:
+    - benchmark
+     
+  benchmark:
+    container_name: benchmark
     image: wavsep:latest
     restart: always
     ports:
      - "8080:8080"
     networks:
-      penetration_net:
-        ipv4_address: 10.5.0.5
-
-  interceptor:
-    container_name: interceptor
-    image: interceptor:latest
-    entrypoint: ["python3", "Interceptor.py", "-ph", "10.5.0.6", "-pp", "8888", "-bh", "10.5.0.5", "-bp", "8080"]    
-    ports:
-     - "8888:8888"
-    networks:
-      penetration_net:
-        ipv4_address: 10.5.0.6
-
+     - penetration_net
+        
+  
+   
 networks:
   penetration_net:
+    name: 'penetration_net'
     driver: bridge
-    ipam:
-     config:
-       - subnet: 10.5.0.0/16
-         gateway: 10.5.0.1
+    
