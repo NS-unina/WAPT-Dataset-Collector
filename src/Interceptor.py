@@ -50,6 +50,10 @@ if __name__ == "__main__":
     benchmark_host = '127.0.0.1'
     benchmark_protocol = 'http://'
 
+    # httplogger_addon is the instance of HTTPLogger class employed to describe the addon that performs the
+    # interception. If this script will be executed in container mode, this object will be replaced by one
+    # instance that contains also the dictionary with the info about other containers on the same net.
+    http_logger_addon = HTTPLogger()
     ################### END MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES #####################
 
     # Reading command line arguments (if there any)
@@ -59,36 +63,35 @@ if __name__ == "__main__":
         # discover the other hosts (e.g. benchmark or/and any other container that will send it
         # requests)
         if sys.argv[1] == '--mode' and sys.argv[2] == 'container':
-            # Services serves as simple list that will hold the name the containers attached to this network.
-            services = []
             # Containers is a dictionary with key=name, value=IP
             containers = {}
 
             # Extracting services/container name from docker-compose.yml
             # The regex used to find these names is /container_name: .*/
             # The pharenteses are used to delimit a group.
-            with open(sys.argv[4]) as docker_compose:
+            with open('docker-compose.yml') as docker_compose:
                 for line in docker_compose.readlines():
                     if re.search(r'container_name: (.*)', line):
-                        services.append(re.search(r'container_name: (.*)', line).group(1))
+                        # After that the regex has been found, insert this as key and assign as value
+                        # the IP Address discovered through the DNS.
+                        service_name = re.search(r'container_name: (.*)', line).group(1)
+                        containers[str(service_name)] = str(socket.gethostbyname(service_name))
 
-            for service in services:
-                # If --mode=container we'll need to discover the other containers in the same network
-                # that has been built by Docker. To do this we need to at least know the name
-                # of these containers: having these names we simply discover their IP's by using
-                # the DNS.
-                containers[str(service)] = str(socket.gethostbyname(service))
+            # checking that the docker-compose.yml is well formed and defines a container named "benchmark".
+            try:
+                benchmark_host = containers['benchmark']
+            except KeyError as keyerror:
+                print("docker-compose.yml doesn't define any container named 'benchmark'! Define it and retry!\n")
+                raise keyerror
+            # checking that the docker-compose.yml is well formed and defines a container named "interceptor".
+            try:
+                proxy_host = containers['interceptor']
+            except KeyError as keyerror:
+                print("docker-compose.yml doesn't define any container named 'interceptor'! Define it and retry!\n")
+                raise keyerror
 
-            # The only container that is necessary when this one will be executed is the one named "benchmark".
-            if containers['benchmark']:
-                print("benchmark container found! docker-compose.yml file is well formed.")
-            else:
-                print("docker-compose.yml doesn't contains any container named 'benchmark'. Check it!")
-
-            # Using the dictionary to customize the parameters.
-
-            proxy_host = containers['interceptor']
-            benchmark_host = containers['benchmark']
+            # replace the default variable with the one that contains info about the network of containers.
+            http_logger_addon = HTTPLogger(containers)
 
 
         # If the syntax is correct, change default variable values to custom ones.
@@ -110,7 +113,7 @@ if __name__ == "__main__":
     config = ProxyConfig(options)
     m.server = ProxyServer(config)
     # Add an HTTPInterceptor instance as an addon for mitmproxy.
-    m.addons.add(HTTPLogger())
+    m.addons.add(http_logger_addon)
 
     try:
         print('Interceptor is now listening...')

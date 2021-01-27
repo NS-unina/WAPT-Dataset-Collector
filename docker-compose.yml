@@ -1,6 +1,8 @@
 # If having any issues with the docker network:
 # https://github.com/docker/for-win/issues/2194
 
+# how to run a container after the ones from which it depends on:
+# https://medium.com/better-programming/a-look-at-docker-composes-bootup-sequence-1f597049cc65
 services:
   interceptor:
    container_name: interceptor

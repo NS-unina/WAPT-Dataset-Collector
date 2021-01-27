@@ -41,9 +41,10 @@ from Parser import Parser
 
 
 class HTTPLogger(object):
-    def __init__(self):
-        self.name = 'Wavsep Interceptor'
-        self.version = '1.0'
+    def __init__(self, services={}):
+        self.name = 'HTTPLogger Addon, by Marco Urbano'
+        self.version = '1.1'
+        self.services = services
 
     # Uncomment if is needed to trigger some event when a request is intercepted.
     #def request(self, flow):
