@@ -28,7 +28,8 @@ class HTTPRecord:
         # commit b2772da5fd540c0b9d1dc07ce4a4a9606147fe3e)
         self.pretty_url = ""
 
-    def __init__(self, flow):
+    # services is the dict in the HTTPLogger constructor, it contains info about the host on the network.
+    def __init__(self, flow, services):
 
         # --------- REQUEST DATA ---------------
         # use .decode() on content to get the webcontent decoded. (mitmproxy saves it as Bytes)
@@ -61,13 +62,29 @@ class HTTPRecord:
         # --------- OTHER FLOW DATA ---------------
         self.pretty_url = flow.request.pretty_url
 
+        # the IP Address of the client that does the request.
+        # this object has the following form:
+        # <ClientConnection: IP:PORT>
+        # https://discourse.mitmproxy.org/t/3-0-flow-client-conn-ip-address-returns-something-different-than-before/777/2
+        # Further more, ip_address is still a tuple (look in connections.py) that has the same form of ClientConnection.
+        self.client_ip = str(flow.client_conn.ip_address[0])
+        self.client_port = str(flow.client_conn.ip_address[1])
+        # if client_ip is a known host, save its name to write it in the JSON record.
+        try:
+            self.client_name = services[self.client_ip]
+        except KeyError:
+            self.client_name = "unknown"
+
+
     # Returns the serialized JSON of self.
     def getJSON(self):
         # Building an on-the-fly dictionary to make this object JSON serializable.
-        dictRecord = {
-                        "Url": self.pretty_url,
-                        "Request": {"Headers": self.req_headers, "Content": self.req_content, "Parameters": self.req_param},
-                        "Response": {"Headers": self.res_headers, "Content": self.res_content}
+        dict_record = {
+                        "url": self.pretty_url,
+                        "request": { "client": {"ip address": self.client_ip, "port": self.client_port,
+                                                "name": self.client_name},
+                                     "headers": self.req_headers, "content": self.req_content, "parameters": self.req_param},
+                        "response": {"headers": self.res_headers, "content": self.res_content}
                      }
         # Passing the dictionary built on the fly because it is serializable.
-        return json.dumps(dictRecord, indent=2)
+        return json.dumps(dict_record, indent=2)

@@ -90,6 +90,9 @@ if __name__ == "__main__":
                 print("docker-compose.yml doesn't define any container named 'interceptor'! Define it and retry!\n")
                 raise keyerror
 
+            # get the inverse dictionary (the one with key=IP, value=name) that will be employed by HTTPLogger to
+            # obtain in a fast way info about a certain IP address
+            containers = {value : key for (key, value) in containers.items()}
             # replace the default variable with the one that contains info about the network of containers.
             http_logger_addon = HTTPLogger(containers)
 

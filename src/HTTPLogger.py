@@ -96,6 +96,6 @@ class HTTPLogger(object):
 
                 # MyHttpRecord constructor will extract all the data from flow object.
                 # Doing so the code will result cleaner to read.
-                http_record = HTTPRecord(flow)
+                http_record = HTTPRecord(flow, self.services)
                 record.write(http_record.getJSON())
 
