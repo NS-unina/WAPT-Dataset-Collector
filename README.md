@@ -29,6 +29,6 @@ The default network will be built using a custom version of [wavsep](http://sect
 as the 'benchmark' container (so the one that will be used as vulnerable web application to attack): obviously you
 can use your own vulnerable web app. 
 ## Contributing
-Marco Urbano, [marcourbano.me](marcourbano.me)
+Marco Urbano, [marcourbano.me](https://marcourbano.me)
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
