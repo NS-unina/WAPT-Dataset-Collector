@@ -26,8 +26,9 @@ after the usage.
 
 The docker-compose.yml file contains the definition of the network that will be raised up by docker.
 The default network will be built using a custom version of [wavsep](http://sectooladdict.blogspot.com/2017/11/wavsep-2017-evaluating-dast-against.html) 
-as the 'benchmark' container (so the one that will be used as vulnerable web application to attack): obviously you
-can use your own vulnerable web app. 
+as the 'benchmark' container (so the one that will be used as vulnerable web application to attack).
+
+A following section with the docker-compose.yml writing guide is coming soon.
 ## Contributing
 Marco Urbano, [marcourbano.me](https://marcourbano.me)
 ## License
