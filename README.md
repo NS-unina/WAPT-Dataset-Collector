@@ -4,26 +4,31 @@ A software with the aim to record Penetration Testing sessions and to produce a
 dataset composed of various kind of data (http requests, screen recording, etc).
 
 ## Installation
-So far the only library that is not included into the Python language and that is employed in this project is 
-[mitmproxy](https://mitmproxy.org). 
-mitmproxy libraries can be installed directly with the package manager [pip](https://pip.pypa.io/en/stable/) 
+The only requirement to execute this script is to have a properly functioning installation of the following: 
+- [docker](https://docs.docker.com/get-docker/) 
+- [python](https://www.python.org/downloads/)
 
-```bash
-sudo pip3 install mitmproxy
-```
+Every container provides to the installation of their required libraries,
+for example the Interceptor, the one that records all the http request/responses, reads 
+[depencencies](https://github.com/NS-unina/WAPT-Dataset-Collector/blob/main/Docker/interceptor/dependencies) file.
 
 ## Usage
-The script can be used with or without options. If there is the need to specify a custom set of 
-options the user will be enforced to specify all the parameters that are needed to use mitmproxy
-as reverse proxy. The syntax to run the script with custom options is the following
+To start the recording on your favourite vulnerable web application you only need to execute
 ```bash
-python3 Interceptor.py -ph 'proxy_host' -pp 'proxy_port' -bh 'benchmark_host' -bp 'benchmark_port' 
-
-# The default options are the following:
-python3 Interceptor.py -ph '127.0.0.1' -pp '8888' -bh '127.0.0.1' -bp '8080'
+docker-compose up
 ```
+in the main folder of the downloaded zip file.
+It is recommended to execute 
+```bash
+docker-compose down
+```
+after the usage.
 
+The docker-compose.yml file contains the definition of the network that will be raised up by docker.
+The default network will be built using a custom version of [wavsep](http://sectooladdict.blogspot.com/2017/11/wavsep-2017-evaluating-dast-against.html) 
+as the 'benchmark' container (so the one that will be used as vulnerable web application to attack): obviously you
+can use your own vulnerable web app. 
 ## Contributing
-
+Marco Urbano, [marcourbano.me](marcourbano.me)
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
