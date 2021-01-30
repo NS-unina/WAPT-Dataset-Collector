@@ -6,6 +6,10 @@
 services:
   interceptor:
    container_name: interceptor
+   build: 
+    context: .
+    dockerfile: Docker/interceptor/Dockerfile
+   
    image: interceptor:latest
    entrypoint: ["python3", "Interceptor.py", "--mode", "container", "--compose", "docker-compose.yml"]
    
@@ -28,6 +32,10 @@ services:
      
   benchmark:
     container_name: benchmark
+    build: 
+      context: .
+      dockerfile: Docker/wavsep/Dockerfile
+   
     image: wavsep:latest
     restart: always
     ports:
@@ -36,7 +44,6 @@ services:
      - penetration_net
         
   
-   
 networks:
   penetration_net:
     name: 'penetration_net'

@@ -5,7 +5,7 @@ FROM python:3.8
 WORKDIR WAPT-Dataset-Collector/code
 
 # copy the dependencies file to the wd.
-COPY dependencies .
+COPY Docker/interceptor/dependencies .
 
 # installing dependencies. (dependencies will always be contained in the same dir of Dockerfile)
 RUN pip3 install -r dependencies

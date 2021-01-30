@@ -4,7 +4,7 @@
 # Description: this simple script defines the main addon used to record http requests/responses as .JSON file.
 # Notes:
 #           To save http requests as JSON:
-#           - https://stackoverflow.com/questions/59730848/how-to-catch-response-of-server-in-mitmproxy-container-and-past-it-into-file-in
+# https://stackoverflow.com/questions/59730848/how-to-catch-response-of-server-in-mitmproxy-container-and-past-it-into-file-in
 
 
 # Datetime is useful due to its now() function: it will be used when creating a new file with a request/response
