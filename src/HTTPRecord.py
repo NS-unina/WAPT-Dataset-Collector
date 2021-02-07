@@ -14,6 +14,9 @@ import json
 import urllib.parse
 import mitmproxy.net.http.url
 
+# to obtain name using gethostbyaddr
+import socket
+
 class HTTPRecord:
     def __init__(self):
         # --------- REQUEST DATA ---------------
@@ -69,11 +72,10 @@ class HTTPRecord:
         # Further more, ip_address is still a tuple (look in connections.py) that has the same form of ClientConnection.
         self.client_ip = str(flow.client_conn.ip_address[0])
         self.client_port = str(flow.client_conn.ip_address[1])
-        # if client_ip is a known host, save its name to write it in the JSON record.
-        try:
-            self.client_name = services[self.client_ip]
-        except KeyError:
-            self.client_name = "unknown"
+        # client name will always be already known to the interceptor (it queryes the DNS when intercepting the request)
+        self.client_name = services[self.client_ip]
+
+
 
 
     # Returns the serialized JSON of self.

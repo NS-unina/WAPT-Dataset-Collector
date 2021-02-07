@@ -47,8 +47,15 @@ class HTTPLogger(object):
         self.services = services
 
     # Uncomment if is needed to trigger some event when a request is intercepted.
-    #def request(self, flow):
-    #   print("request received.")
+    def request(self, flow):
+        # Add host info (ip_addr, hostname) in 'services' dictionary if it has been seen for the first time.
+        try:
+            # check if ip_address is already present in 'services', if not we simply query the DNS to obtain info.
+            self.services[flow.client_conn.ip_address[0]]
+        except KeyError:
+            # gethostbyaddr returns a triple (hostname, aliaslist, ipaddrlist).
+            self.services[flow.client_conn.ip_address[0]] = socket.gethostbyaddr(flow.client_conn.ip_address[0])[0]
+
 
     # When handling a response we need to read not only the headers, but most importantly we
     # need to read the content of the message (the html page) because we need to observe what changes
@@ -76,7 +83,7 @@ class HTTPLogger(object):
             html_title = html_parser.get_title()
 
             # data_folder will be located outside of the current folder (named src/)
-            data_folder = Path("../http_dataset/")
+            data_folder = Path("../out/http_dataset/")
             # Every intercepted request will be labeled with the name of the resource requested
             # plus the current datetime (YYYY-MM-DD HH:MM:SS.DS).
             current_filename = html_title + '-' + str(datetime.now()) + '.json'

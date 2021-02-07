@@ -3,25 +3,30 @@
 
 # how to run a container after the ones from which it depends on:
 # https://medium.com/better-programming/a-look-at-docker-composes-bootup-sequence-1f597049cc65
+
 services:
+
+  # HTTP request/response logger
   interceptor:
    container_name: interceptor
    build: 
     context: .
-    dockerfile: Docker/interceptor/Dockerfile
+    dockerfile: docker/interceptor/Dockerfile
    
    image: interceptor:latest
-   entrypoint: ["python3", "Interceptor.py", "--mode", "container", "--compose", "docker-compose.yml"]
-   
-   # binding host docker sock to this container to send http requests to host's docker engine.
-   # this practise could offer to an attacker the chance to penetrate into the host system:
-   # https://stackoverflow.com/questions/40844197/what-is-the-docker-security-risk-of-var-run-docker-sock 
-   #volumes:
-   #- "/var/run/docker.sock:/var/run/docker.sock"
-   
-   # docker-compose.yml will be employed to make the other containers name known to this one.
+   entrypoint: ["python3", "Interceptor.py", "--mode", "container"]
+
    volumes:
-   - "./docker-compose.yml:/WAPT-Dataset-Collector/code/docker-compose.yml"
+     # uncomment to enable this container to contact the host system docker engine API.
+     # https://stackoverflow.com/questions/40844197/what-is-the-docker-security-risk-of-var-run-docker-sock
+     #- "/var/run/docker.sock:/var/run/docker.sock"
+
+     # uncomment to pass docker-compose.yml to this container.
+     #- "./docker-compose.yml:/WAPT-Dataset-Collector/code/docker-compose.yml"
+
+     - type: bind
+       source: ./out
+       target: /WAPT-Dataset-Collector/out
    ports:
     - "8888:8888"
    networks:
@@ -29,12 +34,13 @@ services:
    # this enforces docker to build this container after that the others on which it depends.
    depends_on:
     - benchmark
-     
+
+  # Benchmark
   benchmark:
     container_name: benchmark
     build: 
       context: .
-      dockerfile: Docker/wavsep/Dockerfile
+      dockerfile: docker/wavsep/Dockerfile
    
     image: wavsep:latest
     restart: always
@@ -42,7 +48,7 @@ services:
      - "8080:8080"
     networks:
      - penetration_net
-        
+
   
 networks:
   penetration_net:

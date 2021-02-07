@@ -23,8 +23,6 @@ from mitmproxy.tools.dump import DumpMaster
 
 # Used to read command line arguments with argv.
 import sys
-# Used to handle the command line arguments. (utility is a file of this project, not a Python official library)
-import utilities
 
 # Importing the custom addon used to save http requests/responses as JSON.
 from HTTPLogger import *
@@ -34,9 +32,7 @@ from HTTPLogger import *
 # runs this script.
 import socket
 
-# regular expressions will be used to obtain the name of every service that will be in execution on the
-# network.
-import re
+import argparse
 
 if __name__ == "__main__":
     ################### START MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES ###################
@@ -59,52 +55,55 @@ if __name__ == "__main__":
     # Reading command line arguments (if there any)
     cmd_arg = len(sys.argv)
     if cmd_arg > 1:
-        # If this script will be executed as Docker container it will do a Docker inspect query to
-        # discover the other hosts (e.g. benchmark or/and any other container that will send it
-        # requests)
-        if sys.argv[1] == '--mode' and sys.argv[2] == 'container':
+        # delegate parsing task to argparse library.
+        arg_parser = argparse.ArgumentParser()
+        arg_parser.add_argument("-mode", "--mode", default='standalone',
+                                help="default --mode is 'standalone'. This script can be used also "
+                                     + "as docker container by submitting 'container'.")
+        # -ph(2) PROXY_HOST(3) -pp(4) PROXY_PORT(5) -bh(6) BENCHMARK_HOST(7) -bp(8) BENCHMARK_PORT(9)
+        arg_parser.add_argument("-ph","-proxy_host", default=proxy_host,
+                                help="IP Address of the proxy")
+        arg_parser.add_argument("-pp", "-proxy_port", default=proxy_port,
+                                help="the port used by the proxy to receive requests")
+        arg_parser.add_argument("-bh", "-benchmark_host", default=benchmark_host,
+                                help="IP Address of the benchmark")
+        arg_parser.add_argument("-bp", "-benchmark_port", default=proxy_port,
+                                help="the port that the benchmark webserver will use to receive requests")
+        args = arg_parser.parse_args()
+
+        # When executed as a Docker container it'll perform a quick check to discover if the 'benchmark'
+        # container has been correctly executed. (here we perform an additional check to ensure that
+        # current container has been named 'interceptor')
+        if args.mode == 'container':
             # Containers is a dictionary with key=name, value=IP
             containers = {}
 
-            # Extracting services/container name from docker-compose.yml
-            # The regex used to find these names is /container_name: .*/
-            # The pharenteses are used to delimit a group.
-            with open('docker-compose.yml') as docker_compose:
-                for line in docker_compose.readlines():
-                    if re.search(r'container_name: (.*)', line):
-                        # After that the regex has been found, insert this as key and assign as value
-                        # the IP Address discovered through the DNS.
-                        service_name = re.search(r'container_name: (.*)', line).group(1)
-                        containers[str(service_name)] = str(socket.gethostbyname(service_name))
-
-            # checking that the docker-compose.yml is well formed and defines a container named "benchmark".
             try:
-                benchmark_host = containers['benchmark']
-            except KeyError as keyerror:
+                benchmark_host = socket.gethostbyname('benchmark')
+                containers[benchmark_host] = 'benchmark'
+            except socket.gaierror as gai_error:
                 print("docker-compose.yml doesn't define any container named 'benchmark'! Define it and retry!\n")
-                raise keyerror
-            # checking that the docker-compose.yml is well formed and defines a container named "interceptor".
+                raise gai_error
+            # checking that the name of current container has been correctly written as 'interceptor'
             try:
-                proxy_host = containers['interceptor']
-            except KeyError as keyerror:
+                proxy_host = socket.gethostbyname('interceptor')
+                containers[proxy_host] = 'interceptor'
+            except socket.gaierror as gai_error:
                 print("docker-compose.yml doesn't define any container named 'interceptor'! Define it and retry!\n")
-                raise keyerror
+                raise gai_error
 
-            # get the inverse dictionary (the one with key=IP, value=name) that will be employed by HTTPLogger to
-            # obtain in a fast way info about a certain IP address
-            containers = {value : key for (key, value) in containers.items()}
-            # replace the default variable with the one that contains info about the network of containers.
+            # construct the addon instance with the dictionary initially composed only by the addresses
             http_logger_addon = HTTPLogger(containers)
 
 
         # If the syntax is correct, change default variable values to custom ones.
-        elif utilities.check_arguments(sys.argv):
-            proxy_host = sys.argv[2]
-            proxy_port = sys.argv[4]
-            benchmark_host = sys.argv[6]
-            benchmark_port = sys.argv[8]
         else:
-            print("Wrong syntax detected. Running the script with default parameters...")
+            proxy_host = args.ph
+            proxy_port = args.pp
+            benchmark_host = args.bh
+            benchmark_port = args.bp
+        #else:
+        #    print("Wrong syntax detected. Running the script with default parameters...")
 
     # Building mitmproxy_mode string on the fly to made it simple to modify.
     mitmproxy_mode = 'reverse' + ':' + benchmark_protocol + str(benchmark_host) + ':' + str(benchmark_port)

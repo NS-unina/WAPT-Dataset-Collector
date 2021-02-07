@@ -139,4 +139,4 @@ dmypy.json
 cython_debug/
 
 # Dataset folders.
-http_dataset/
+out/
