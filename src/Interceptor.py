@@ -45,11 +45,13 @@ if __name__ == "__main__":
     benchmark_port = 8080
     benchmark_host = '127.0.0.1'
     benchmark_protocol = 'http://'
+    # String to identify the path of the javascript code used to capture events from the browser of the pentester.
+    javascript_path = "./action_recording.js"
 
     # httplogger_addon is the instance of HTTPLogger class employed to describe the addon that performs the
     # interception. If this script will be executed in container mode, this object will be replaced by one
     # instance that contains also the dictionary with the info about other containers on the same net.
-    http_logger_addon = HTTPLogger()
+    http_logger_addon = None
     ################### END MITMPROXY AND BENCHMARK DEFAULT SETTINGS VARIABLES #####################
 
     # Reading command line arguments (if there any)
@@ -75,7 +77,7 @@ if __name__ == "__main__":
         # container has been correctly executed. (here we perform an additional check to ensure that
         # current container has been named 'interceptor')
         if args.mode == 'container':
-            # Containers is a dictionary with key=name, value=IP
+            # Containers is a dictionary with key=IP, value=hostname
             containers = {}
 
             try:
@@ -84,7 +86,7 @@ if __name__ == "__main__":
             except socket.gaierror as gai_error:
                 print("docker-compose.yml doesn't define any container named 'benchmark'! Define it and retry!\n")
                 raise gai_error
-            # checking that the name of current container has been correctly written as 'interceptor'
+            # checking that current container has been correctly named as 'interceptor'
             try:
                 proxy_host = socket.gethostbyname('interceptor')
                 containers[proxy_host] = 'interceptor'
@@ -92,12 +94,12 @@ if __name__ == "__main__":
                 print("docker-compose.yml doesn't define any container named 'interceptor'! Define it and retry!\n")
                 raise gai_error
 
-            # construct the addon instance with the dictionary initially composed only by the addresses
-            http_logger_addon = HTTPLogger(containers)
-
-
-        # If the syntax is correct, change default variable values to custom ones.
+            # construct the addon instance with the dictionary initially composed only by the addresses of
+            # benchmark and interceptor itself.
+            http_logger_addon = HTTPLogger(containers, javascript_path)
         else:
+            # If the syntax is correct, change default variable values to custom ones.
+            http_logger_addon = HTTPLogger(None, javascript_path)
             proxy_host = args.ph
             proxy_port = args.pp
             benchmark_host = args.bh
