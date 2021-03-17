@@ -47,6 +47,8 @@ if __name__ == "__main__":
     benchmark_protocol = 'http://'
     # String to identify the path of the javascript code used to capture events from the browser of the pentester.
     javascript_path = "./action_recording.js"
+    # String to identify the path of HTML page showed when an user asks to end his session.
+    endofsession_path = "./EOS.html"
 
     # httplogger_addon is the instance of HTTPLogger class employed to describe the addon that performs the
     # interception. If this script will be executed in container mode, this object will be replaced by one
@@ -69,7 +71,7 @@ if __name__ == "__main__":
                                 help="the port used by the proxy to receive requests")
         arg_parser.add_argument("-bh", "-benchmark_host", default=benchmark_host,
                                 help="IP Address of the benchmark")
-        arg_parser.add_argument("-bp", "-benchmark_port", default=proxy_port,
+        arg_parser.add_argument("-bp", "-benchmark_port", default=benchmark_port,
                                 help="the port that the benchmark webserver will use to receive requests")
         args = arg_parser.parse_args()
 
@@ -96,10 +98,10 @@ if __name__ == "__main__":
 
             # construct the addon instance with the dictionary initially composed only by the addresses of
             # benchmark and interceptor itself.
-            http_logger_addon = HTTPLogger(containers, javascript_path)
+            http_logger_addon = HTTPLogger(containers, javascript_path, endofsession_path)
         else:
             # If the syntax is correct, change default variable values to custom ones.
-            http_logger_addon = HTTPLogger(None, javascript_path)
+            http_logger_addon = HTTPLogger(None, javascript_path, endofsession_path)
             proxy_host = args.ph
             proxy_port = args.pp
             benchmark_host = args.bh

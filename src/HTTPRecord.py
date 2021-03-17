@@ -1,6 +1,6 @@
 # Author: Marco Urbano.
 # Date: 14 January 2021.
-# Description: myHttpRecord is a simple object that can be used both for the request and response
+# Description: HTTPRecord is a simple object that can be used both for the request and response
 #              to store headers and content intercepted by mitmproxy and to return a JSON object to be saved.
 # Notes:
 #           - The idea to create a class with a method that make JSONable a complex object was found here:
@@ -31,6 +31,8 @@ class HTTPRecord:
         # commit b2772da5fd540c0b9d1dc07ce4a4a9606147fe3e)
         self.pretty_url = ""
 
+        # The following attribute will be employed by HTTPLogger when writing data on the output folder.
+        self.time_intercepted = None
     # services is the dict in the HTTPLogger constructor, it contains info about the host on the network.
     def __init__(self, flow, services):
 
