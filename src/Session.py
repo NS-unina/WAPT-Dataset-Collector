@@ -11,7 +11,7 @@
 # to save attribute named "start_time".
 from datetime import datetime
 
-from HTTPRecord import *
+from HTTPTransaction import *
 
 # Used to save files specifying the path (a directory that differs from the cwd)
 from pathlib import Path
@@ -22,6 +22,7 @@ import errno
 
 
 class Session:
+
     def __init__(self, url="", task_name="", start_time=None, http_transactions=[],
                  end_user_actions=""):
         self.url: str = url
@@ -32,12 +33,18 @@ class Session:
         # TODO: Dataset path will be obtained later from task_name, there is no sense to put it as an attribute.
         # self.dataset_path: str = dataset_path
 
-        # contains the list of HTTPRecord objects.
+        # contains the list of HTTPTransaction objects.
         self.http_transactions: list = http_transactions
         # the JSON object that will be received at the end of the recording session.
         self.end_user_actions: str = end_user_actions
 
-    def saveSession(self):
+    def __del__(self):
+        del self.url
+        del self.task_name
+        del self.http_transactions
+        del self.end_user_actions
+
+    def save_session(self):
         # here the code for saving both http_transactions and end_user_actions in the proper folder.
 
         # replacing all white space with underscores to avoid problems when making the directory named as the task.
@@ -78,3 +85,17 @@ class Session:
         u_actions_rec = out_folder / "end_user_actions.json"
         with open(u_actions_rec, "w") as record_2:
             record_2.write(self.end_user_actions)
+
+    # This method will be employed to clean current object data structures: the business logic of this script
+    # allows only one session per execution, so it is useless to delete and instantiate a new Session
+    # everytime the proxy server is asked to start a new session recording.
+    def clear(self):
+        self.task_name = ""
+        self.url = ""
+        self.start_time = None
+        # Cleaning datastructures employed to save transactions and user actions.
+        self.http_transactions.clear()
+        # TODO: end_user_action will not be a string anymore with a upcoming update, this line will
+        #       be modified to reflect the changes that will occurr to the new data structure employed.
+        #       Marco, 20/03
+        self.end_user_actions = ""

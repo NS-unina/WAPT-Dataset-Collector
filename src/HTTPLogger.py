@@ -12,7 +12,7 @@
 # localhost_wavsep_1, localhost_wavsep_2, ..., localhost_wavsep_n).
 from datetime import datetime
 
-from HTTPRecord import *
+from HTTPTransaction import *
 
 # Initially used to invoke "mkdir" to create the dataset folder.
 import os
@@ -56,13 +56,15 @@ class HTTPLogger(object):
         if services is None:
             services = {}
         self.name = 'HTTPLogger Addon, by Marco Urbano'
-        self.version = '2.1 -- 14/03/21'
+        self.version = '2.2 -- 20/03/21'
         self.services = services
         # session attribute is an istance of Session. It contains all the info recorded during the session and will
         # be used to write all this info on the disk when the recording protocol ends. This attribute will initially
-        # be set to None, during the recording session it will contain all the data related to current recording session
-        # and when the recording protocol ends it is set to None again to make room for a new session.
-        self.session = None
+        # be instantiated as a clean session (the constructor with no parameters will set this object attributes with
+        # empty strings or empty lists of objects). During the recording session it will contain all
+        # the data related to current recording session and when the recording protocol ends it will be
+        # cleaned again to make room for a new session.
+        self.session = Session()
 
         # this boolean flag is employed to ensure a correct execution of the entire protocol.
         # Initially it is set to False. It will be enabled only when this class will notice that user asked to end
@@ -129,9 +131,9 @@ class HTTPLogger(object):
             self.session.end_user_actions = str(flow.request.content.decode())
 
             # Write recorded session in the output folder.
-            self.session.saveSession()
+            self.session.save_session()
             # Set self.session == null to enable recording a new session. (Singleton pattern)
-            self.session = None
+            self.session.clear()
 
             # set to False the attribute "waiting_for_json", with this operation the protocol ends successfully.
             self.waiting_for_json = False
@@ -197,18 +199,20 @@ class HTTPLogger(object):
                     # Uncomment to use the url as the name of the recorded http response.
                     # url_request = url_request.replace("/", "_")
 
-                    # Instantiate attribute session for the first time. If this response is not the first one
-                    # that follows the request with "record=true" simply push the HTTPRecord in the existing
+                    # Instantiate session's attributes for the first time. If this response is not the first one
+                    # that follows the request with "record=true" simply push the HTTPTransaction in the existing
                     # session.http_transaction list.
-                    if self.session is None:
+                    if self.session.task_name == "":
                         # Session class objects requires only url, task_name and start_time to be instantiated.
-                        task_name = html.title.string if html.title is not None else "Empty Task Name"
-                        start_time = datetime.now()
+                        self.session.task_name = html.title.string if html.title is not None else "Empty Task Name"
+                        self.session.start_time = datetime.now()
+                        self.session.url = url_request
 
-                        self.session = Session(url_request, task_name, start_time)
+                        # TODO: remove this line of code if clear method works well
+                        #self.session = Session(url_request, task_name, start_time)
 
                     # Save current transaction into session.http_transactions
-                    self.session.http_transactions.append(HTTPRecord(flow, self.services))
+                    self.session.http_transactions.append(HTTPTransaction(flow, self.services))
 
             # Case 2: http_response HTML will be altered with a simple HTML page that informs the user that
             #         the recording session has correctly been ended and provides him/her info about data recorded.
@@ -228,7 +232,7 @@ class HTTPLogger(object):
                 container = html.head or html.body
                 if container:
                     # Adding even an ID to the new tag to simply remove it from the records when writing the dataset.
-                    script = html.new_tag('script', type='text/javascript', id='record_js')
+                    script = html.new_tag('script', type='text/javascript', id='wapt_dataset_collector_record')
                     script.string = self.action_recording_js
                     container.insert(0, script)
                     flow.response.text = str(html)

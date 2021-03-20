@@ -31,7 +31,6 @@ recorder.listeners = [
                         'keypress',
                         'keydown',
                         'keyup',
-                        'scroll',
                         'load',
                      ];
                      
@@ -145,7 +144,25 @@ recorder.addState = function (event, action) {
     // record DOM only if this function has been invoked by some eventListener, if this is a simple page refresh
     // or a navigateTo event, do not save the DOM.
     if (event) event.target.dataset.recording_target = true;
-    record.dom = document.documentElement.outerHTML;
+    // Remove the tag containing this script to record in order to make the recording code invisible to the end client.
+
+    // create a new dov container
+     var temp_div = document.createElement('div');
+    // assigning current page innerHTML to div's innerHTML.
+     temp_div.innerHTML = document.documentElement.innerHTML;
+    // getting node that corresponds to client side recording script.
+     var script_element = temp_div.querySelector("[id='wapt_dataset_collector_record']");
+    // remove recording script node.
+     script_element.parentNode.removeChild(script_element);
+    // get div's innerHTML into a new variable
+     var html_wo_script = temp_div.innerHTML;
+
+    // Doing this way we only erase the content of node but the empty node is still there in HTML.
+    //document.getElementById("wapt_dataset_collector_record").innerHTML = "";
+
+    //record.dom = document.documentElement.innerHTML;
+    record.dom = html_wo_script;
+
     if (event) delete event.target.dataset.recording_target;
 
     // Add new record to localStorage.
@@ -207,19 +224,6 @@ recorder.onkeyup = function (event) {
     'keyCode': event.keyCode,
     'charCode': event.charCode,
     'humanReadable': String.fromCharCode(event.keyCode),
-  });
-}
-
-recorder.onscroll = function (event) {
-  // Scroll is super redundant; only keep the first one
-  if (recorder.data.states.length) {
-    var lastState = recorder.data.states[recorder.data.states.length - 1];
-    if (lastState.action && lastState.action.type === 'scroll')
-      return;
-      //recorder.data.states.pop();     // <-- use this for keeping the last one
-  }
-  recorder.addState(event, {
-    'type': 'scroll',
   });
 }
 

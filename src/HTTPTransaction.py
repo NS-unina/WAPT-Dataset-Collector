@@ -1,6 +1,6 @@
 # Author: Marco Urbano.
 # Date: 14 January 2021.
-# Description: HTTPRecord is a simple object that can be used both for the request and response
+# Description: HTTPTransaction is a simple object that can be used both for the request and response
 #              to store headers and content intercepted by mitmproxy and to return a JSON object to be saved.
 # Notes:
 #           - The idea to create a class with a method that make JSONable a complex object was found here:
@@ -17,7 +17,7 @@ import mitmproxy.net.http.url
 # to obtain name using gethostbyaddr
 import socket
 
-class HTTPRecord:
+class HTTPTransaction:
     def __init__(self):
         # --------- REQUEST DATA ---------------
         self.req_headers: dict
