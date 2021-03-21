@@ -71,9 +71,10 @@ recorder.manageSession = function () {
             var data = {};
             data['task_name'] = localStorage['wapt_session_taskname'];
 
-            for (var i = 0, n_records = parseInt(localStorage['wapt_session_nrecords']); i < n_records; ++i) {
+            for (var i = 1, n_records = parseInt(localStorage['wapt_session_nrecords']); i < n_records + 1; ++i) {
                 record_name = 'wapt_record_' + i;
-                data[record_name] = localStorage[record_name];
+                record_string = localStorage[record_name];
+                data[i] = JSON.parse(record_string);
             }
 
 
@@ -106,8 +107,8 @@ recorder.manageSession = function () {
         //         that will be employed during session time.
         if(wapt_session_recording == null){
             var url = window.location.pathname;
-            // TODO: perform replace with a updated list of most used webpages extension. (not only .jsp, as seen in wavsep pages)
-            localStorage['wapt_session_taskname'] = url.substr(url.lastIndexOf('/') + 1).replace(/\.jsp/, '');
+            // trimming off page extension to have a clean task name.
+            localStorage['wapt_session_taskname'] = url.substr(url.lastIndexOf('/') + 1).replace(/\..*/, '');
             localStorage['wapt_session_nrecords'] = 0;
             localStorage['wapt_session_start_time'] = new Date().getTime();
             localStorage['wapt_session_recording'] = true;

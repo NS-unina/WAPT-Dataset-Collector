@@ -73,6 +73,9 @@ class Session:
                     if exc.errno != errno.EEXIST:
                         raise
 
+            # Writing the actions performed by the end client together with the http_transaction.
+            # TODO: write here the code to select which action belongs to which transaction.
+
             # Just a little syntaptic sugar: could be written without the "with ... as ..."
             # but doing this way the opened file will be closed after the manipulation.
             with open(trans_rec, "w") as record_1:

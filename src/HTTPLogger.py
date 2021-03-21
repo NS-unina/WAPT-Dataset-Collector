@@ -208,9 +208,6 @@ class HTTPLogger(object):
                         self.session.start_time = datetime.now()
                         self.session.url = url_request
 
-                        # TODO: remove this line of code if clear method works well
-                        #self.session = Session(url_request, task_name, start_time)
-
                     # Save current transaction into session.http_transactions
                     self.session.http_transactions.append(HTTPTransaction(flow, self.services))
 
