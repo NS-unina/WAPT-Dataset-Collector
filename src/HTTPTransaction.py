@@ -81,7 +81,7 @@ class HTTPTransaction:
 
 
     # Returns the serialized JSON of self.
-    def getJSON(self):
+    def get_dict(self):
         # Building an on-the-fly dictionary to make this object JSON serializable.
         dict_record = {
                         "url": self.pretty_url,
@@ -91,4 +91,5 @@ class HTTPTransaction:
                         "response": {"headers": self.res_headers, "content": self.res_content}
                      }
         # Passing the dictionary built on the fly because it is serializable.
-        return json.dumps(dict_record, indent=2)
+        #return json.dumps(dict_record, indent=2)
+        return dict_record

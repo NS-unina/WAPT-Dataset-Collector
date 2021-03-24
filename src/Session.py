@@ -20,6 +20,8 @@ from pathlib import Path
 import os
 import errno
 
+# To make a deep copy of the dictionary containing the action chain.
+import copy
 
 class Session:
 
@@ -28,7 +30,7 @@ class Session:
         self.url: str = url
         self.task_name: str = task_name
         self.start_time: datetime = start_time
-        #self.end_time: datetime = None
+        # self.end_time: datetime = None
 
         # TODO: Dataset path will be obtained later from task_name, there is no sense to put it as an attribute.
         # self.dataset_path: str = dataset_path
@@ -55,13 +57,33 @@ class Session:
 
         # Every intercepted request will be labeled with the name of the resource requested
         # plus the current datetime (YYYY-MM-DD HH:MM:SS.DS).
-        #current_filename = '' + '.json'
-        #file_to_open = dataset_folder / current_filename
-
+        # current_filename = '' + '.json'
+        # file_to_open = dataset_folder / current_filename
 
         # Save each recorded http transaction with an integer only to take trace of which has happened first.
         trans_n = 1
+        temp_actions_dict = {}
+        temp_session_dict = {}
+
+        # Writing the actions performed by the end client together with the http_transaction.
+        actions_performed = json.loads(self.end_user_actions)
+
+        # no_actions equals to eua_dict minus 1 because last key represents task name.
+        # (could be modified before the release)
+        # no_actions = len(eua_dict) - 1
+
         for transaction in self.http_transactions:
+
+            # action number counter for every http_transaction. It is employed to enumerate actions from a single
+            # transaction from 1 to n.
+            action_n = 1
+
+            # The action containing JSON uses special actions named "navigateTo" to exactly know when a transaction
+            # is beginning. Exploiting this "delimiter" we can extract only values corresponding to actions
+            # related to current transaction. delimiter_encountered is a flag employed to know if the delimiter for
+            # current transaction has already been met.
+            delimiter_encountered = False
+
             output = str(trans_n) + '.json'
             trans_rec = out_folder / output
 
@@ -73,21 +95,45 @@ class Session:
                     if exc.errno != errno.EEXIST:
                         raise
 
-            # Writing the actions performed by the end client together with the http_transaction.
-            # TODO: write here the code to select which action belongs to which transaction.
+            ''' 
+                we're doing a deep copy of the dictinary "actions_performed" because if we would 
+                iterate over it by using the method .items() we would not be able to do it because
+                we need to modify the dictionary while iterating on it.
+            '''
+            dict_to_iterate = copy.deepcopy(actions_performed)
+            for k, v in dict_to_iterate.items():
+                if k != "task_name":
+                    if v['action']['type'] == "navigateTo":
+                        if not delimiter_encountered:
+                            delimiter_encountered = True
+                            del actions_performed[k]
+                        else:
+                            break
+                    else:
+                        # Copy current key, value pair to the temporary dictionary
+                        # that only contains actions belonging to this transaction.
+                        temp_actions_dict[action_n] = v
+                        del actions_performed[k]
+                        action_n += 1
+                else:
+                    del actions_performed[k]
+
+            # A transaction will contain it own actions aside from http_request and http_response.
+            temp_session_dict = transaction.get_dict()
+            temp_session_dict["actions"] = dict(temp_actions_dict)
+
 
             # Just a little syntaptic sugar: could be written without the "with ... as ..."
             # but doing this way the opened file will be closed after the manipulation.
             with open(trans_rec, "w") as record_1:
-                # write the http_transaction as JSON.
-                record_1.write(transaction.getJSON())
+                # write the entire session as JSON.
+                record_1.write(json.dumps(temp_session_dict, indent=2))
 
             trans_n += 1
 
-        # Save the file that contains the chain of actions performed by the user
-        u_actions_rec = out_folder / "end_user_actions.json"
-        with open(u_actions_rec, "w") as record_2:
-            record_2.write(self.end_user_actions)
+            # Clean temporary dict to make room for next session.
+            temp_actions_dict.clear()
+            temp_session_dict.clear()
 
     # This method will be employed to clean current object data structures: the business logic of this script
     # allows only one session per execution, so it is useless to delete and instantiate a new Session
