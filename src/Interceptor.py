@@ -103,9 +103,12 @@ if __name__ == "__main__":
             # If the syntax is correct, change default variable values to custom ones.
             http_logger_addon = HTTPLogger(None, javascript_path, endofsession_path)
             proxy_host = args.ph
-            proxy_port = args.pp
             benchmark_host = args.bh
-            benchmark_port = args.bp
+
+        # benchmark and proxy ports could change even if executed as a docker container (DVWA runs on port 80,
+        # Wavsep runs on port 8080).
+        proxy_port = args.pp
+        benchmark_port = args.bp
         #else:
         #    print("Wrong syntax detected. Running the script with default parameters...")
 

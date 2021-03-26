@@ -102,7 +102,7 @@ class Session:
             '''
             dict_to_iterate = copy.deepcopy(actions_performed)
             for k, v in dict_to_iterate.items():
-                if k != "task_name":
+                if k != "task_name" and k != "window_height" and k != "window_width":
                     if v['action']['type'] == "navigateTo":
                         if not delimiter_encountered:
                             delimiter_encountered = True

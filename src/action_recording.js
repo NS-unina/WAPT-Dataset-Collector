@@ -9,8 +9,6 @@
 //      project aims to allow it because a penetration testing session could require to visit not only one page.
 
 
-
-
 // ################################################
 // Record demonstrations
 
@@ -70,7 +68,8 @@ recorder.manageSession = function () {
 
             var data = {};
             data['task_name'] = localStorage['wapt_session_taskname'];
-
+            data['window_width'] = localStorage['wapt_session_width'];
+            data['window_height'] = localStorage['wapt_session_height'];
             for (var i = 1, n_records = parseInt(localStorage['wapt_session_nrecords']); i < n_records + 1; ++i) {
                 record_name = 'wapt_record_' + i;
                 record_string = localStorage[record_name];
@@ -112,6 +111,9 @@ recorder.manageSession = function () {
             localStorage['wapt_session_nrecords'] = 0;
             localStorage['wapt_session_start_time'] = new Date().getTime();
             localStorage['wapt_session_recording'] = true;
+            // obtaining window dimension.
+            localStorage['wapt_session_width'] = window.innerWidth;
+            localStorage['wapt_session_height'] = window.innerHeight;
         }
         // Case 3: session recording was already active and user navigated to a new page / refreshed the same page
         //         with different parameter values. (GET or POST)
