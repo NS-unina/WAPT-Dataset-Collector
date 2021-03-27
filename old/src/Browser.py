@@ -16,35 +16,18 @@ from selenium.webdriver.support.events import EventFiringWebDriver, AbstractEven
 import json
 from selenium.webdriver.common.by import By
 
-
-class MyListener(AbstractEventListener):
-    def __init__(self):
-        self.url = 'empty'
-
-    def before_navigate_to(self, url, driver):
-        print("Before navigate to %s" % url)
-
-    def after_navigate_to(self, url, driver):
-        print("After navigate to %s" % url)
-        print("Vecchio URL: " + self.curr_url + "Nuovo URL: " + driver.current_url)
-        # #driver.save_screenshot("./image.png")
-
-    def after_navigate_forward(self, driver):
-        print("After navigate forward")
-
-    def after_click(self, element, driver):
-        print("after click!")
-
-    def before_click(self, element, driver):
-        print("before click!")
+import time
+from selenium import webdriver
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
-benchmark_name = socket.gethostbyname("localhost")
-benchmark_port = 8888
-benchmark_homepage = '/wavsep'
+#benchmark_name = socket.gethostbyname("localhost")
+#benchmark_port = 8888
+#benchmark_homepage = '/wavsep'
 
 # Dinamically build up the url to request depending on the benchmark IP address, port and homepage
-benchmark_url = 'http://' + benchmark_name + ':' + str(benchmark_port) + benchmark_homepage
+#benchmark_url = 'http://' + benchmark_name + ':' + str(benchmark_port) + benchmark_homepage
 
 #page_to_test = input("Insert the URI that contains the webpage to test. The recording will be found in a folder" +
 #                     "that contains the title of the page plus the timestamp.\n:")
@@ -69,16 +52,21 @@ event_listener = MyListener()
 ef_driver = EventFiringWebDriver(driver, event_listener)
 
 
-input("Press any key to quit.\n")
-try:
-    events = ef_driver.execute_script('return window._getRecordedStates();')
-except:
-    raise ValueError(
-        'Could not call window._getRecordedStates(). ' +
-        'This usually means you navigated to a new page, which is currently unsupported.'
-    )
 
-print(json.dumps(events, indent=2))
+driver = webdriver.Chrome()
+
+driver.get('http://google.com')
+element = driver.find_element_by_link_text('About')
+
+ActionChains(driver) \
+    .key_down(Keys.CONTROL) \
+    .click(element) \
+    .key_up(Keys.CONTROL) \
+    .perform()
+
+time.sleep(10) # Pause to allow you to inspect the browser.
+
+driver.quit()
 
 ef_driver.quit()
 

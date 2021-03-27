@@ -36,7 +36,7 @@ recorder.addEventListeners = function () {
   recorder.listeners.forEach(function (name) {
     // listen to events when they start and finish.
     document.addEventListener(name, recorder['on' + name], true);
-    document.addEventListener(name, recorder['on' + name], false);
+    //document.addEventListener(name, recorder['on' + name], false);
   });
 }
 
@@ -211,6 +211,7 @@ recorder.onkeypress = function (event) {
     'keyCode': event.keyCode,
     'charCode': event.charCode,
     'humanReadable': String.fromCharCode(event.keyCode),
+    'key': event.key
   });
 }
 recorder.onkeydown = function (event) {
@@ -219,6 +220,7 @@ recorder.onkeydown = function (event) {
     'keyCode': event.keyCode,
     'charCode': event.charCode,
     'humanReadable': String.fromCharCode(event.keyCode),
+    'key': event.key
   });
 }
 recorder.onkeyup = function (event) {
@@ -227,6 +229,7 @@ recorder.onkeyup = function (event) {
     'keyCode': event.keyCode,
     'charCode': event.charCode,
     'humanReadable': String.fromCharCode(event.keyCode),
+    'key': event.key
   });
 }
 

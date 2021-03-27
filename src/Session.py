@@ -63,10 +63,14 @@ class Session:
         # Save each recorded http transaction with an integer only to take trace of which has happened first.
         trans_n = 1
         temp_actions_dict = {}
-        temp_session_dict = {}
+        session_dict = {}
 
         # Writing the actions performed by the end client together with the http_transaction.
         actions_performed = json.loads(self.end_user_actions)
+        # extracting window dimension.
+        session_dict['window_height'] = actions_performed.pop('window_height', "MAX")
+        session_dict['window_width'] = actions_performed.pop('window_width', "MAX")
+        session_dict['transactions'] = {}
 
         # no_actions equals to eua_dict minus 1 because last key represents task name.
         # (could be modified before the release)
@@ -83,17 +87,6 @@ class Session:
             # related to current transaction. delimiter_encountered is a flag employed to know if the delimiter for
             # current transaction has already been met.
             delimiter_encountered = False
-
-            output = str(trans_n) + '.json'
-            trans_rec = out_folder / output
-
-            # Create the directory named as the current task with the first usage.
-            if not os.path.exists(os.path.dirname(trans_rec)):
-                try:
-                    os.makedirs(os.path.dirname(trans_rec))
-                except OSError as exc:  # Guard against race condition
-                    if exc.errno != errno.EEXIST:
-                        raise
 
             ''' 
                 we're doing a deep copy of the dictinary "actions_performed" because if we would 
@@ -119,21 +112,32 @@ class Session:
                     del actions_performed[k]
 
             # A transaction will contain it own actions aside from http_request and http_response.
-            temp_session_dict = transaction.get_dict()
-            temp_session_dict["actions"] = dict(temp_actions_dict)
-
-
-            # Just a little syntaptic sugar: could be written without the "with ... as ..."
-            # but doing this way the opened file will be closed after the manipulation.
-            with open(trans_rec, "w") as record_1:
-                # write the entire session as JSON.
-                record_1.write(json.dumps(temp_session_dict, indent=2))
+            session_dict['transactions'][trans_n] = transaction.get_dict()
+            session_dict['transactions'][trans_n]['actions'] = dict(temp_actions_dict)
 
             trans_n += 1
 
             # Clean temporary dict to make room for next session.
             temp_actions_dict.clear()
-            temp_session_dict.clear()
+            #temp_session_dict.clear()
+
+        # writing session_dict, the dictionary that contains the entire session, on the JSON output file.
+        output = 'session_recording.json'
+        trans_rec = out_folder / output
+
+        # Create the directory named as the current task with the first usage.
+        if not os.path.exists(os.path.dirname(trans_rec)):
+            try:
+                os.makedirs(os.path.dirname(trans_rec))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        # Just a little syntaptic sugar: could be written without the "with ... as ..."
+        # but doing this way the opened file will be closed after the manipulation.
+        with open(trans_rec, "w") as record_1:
+            # write the entire session as JSON.
+            record_1.write(json.dumps(session_dict, indent=2))
 
     # This method will be employed to clean current object data structures: the business logic of this script
     # allows only one session per execution, so it is useless to delete and instantiate a new Session

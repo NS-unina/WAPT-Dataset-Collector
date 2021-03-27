@@ -100,7 +100,7 @@ if __name__ == "__main__":
             # benchmark and interceptor itself.
             http_logger_addon = HTTPLogger(containers, javascript_path, endofsession_path)
         else:
-            # If the syntax is correct, change default variable values to custom ones.
+            # If this code will not be executed as a docker container simply build an HTTPLogger without containers.
             http_logger_addon = HTTPLogger(None, javascript_path, endofsession_path)
             proxy_host = args.ph
             benchmark_host = args.bh
