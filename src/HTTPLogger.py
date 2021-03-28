@@ -10,23 +10,16 @@
 # Datetime is useful due to its now() function: it will be used when creating a new file with a request/response
 # intercepted. Without this function we should name a request to the same URI with a progressive number (e.g.
 # localhost_wavsep_1, localhost_wavsep_2, ..., localhost_wavsep_n).
-from datetime import datetime
-
-from HTTPTransaction import *
 
 # Initially used to invoke "mkdir" to create the dataset folder.
-import os
-import errno
 
 # Used to save files specifying the path (a directory that differs from the cwd)
-from pathlib import Path
 
 # Added 14/01/21, could be useful to read request and response.
 # from mitmproxy.net.http.http1.assemble import assemble_request, assemble_response, _assemble_request_headers
 
 # Used to parse html content of the http_response and to get the title.
 # Class myParser is a subclass of HTTPParser of html library.
-from Parser import Parser
 
 # Beatifulsoup will be employed to quickly manipulate the response with the aim to add javascript to it.
 from bs4 import BeautifulSoup

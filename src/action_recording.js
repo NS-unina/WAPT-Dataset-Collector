@@ -21,11 +21,16 @@
 */
 
 var recorder = {};
+
+// this listeners are not useful to our needs because the most interesting actions the user can do
+// when performing a penetration testing session are click, dbclick, keydown, keypress, keyup actions.
+recorder.mandatory_listeners = [
+                                    'mousedown',
+                                    'mouseup',
+                                ]
 recorder.listeners = [
                         'click',
                         'dblclick',
-                        'mousedown',
-                        'mouseup',
                         'keypress',
                         'keydown',
                         'keyup',
