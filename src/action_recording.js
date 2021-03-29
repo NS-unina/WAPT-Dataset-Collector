@@ -184,29 +184,29 @@ recorder.addState = function (event, action) {
 recorder.ondblclick = function (event) {
   recorder.addState(event, {
     'type': 'dblclick',
-    'x': event.pageX,
-    'y': event.pageY,
+    'x': event.clientX,
+    'y': event.clientY,
   });
 }
 recorder.onclick = function (event) {
   recorder.addState(event, {
     'type': 'click',
-    'x': event.pageX,
-    'y': event.pageY,
+    'x': event.clientX,
+    'y': event.clientY,
   });
 }
 recorder.onmousedown = function (event) {
   recorder.addState(event, {
     'type': 'mousedown',
-    'x': event.pageX,
-    'y': event.pageY,
+    'x': event.clientX,
+    'y': event.clientY,
   });
 }
 recorder.onmouseup = function (event) {
   recorder.addState(event, {
     'type': 'mouseup',
-    'x': event.pageX,
-    'y': event.pageY,
+    'x': event.clientX,
+    'y': event.clientY,
   });
 }
 

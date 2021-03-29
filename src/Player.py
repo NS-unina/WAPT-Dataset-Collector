@@ -1,6 +1,7 @@
 # Author: Marco Urbano.
-# Date: 30 January 2021.
-# Description: this file contains the script that performs the DOM recording for every action performed by the pentester
+# Date: 29 March 2021.
+# Description: this class has the responsibility to read the .JSON file produced by WAPT-Dataset-Collector and to
+#              to replay it by means of Selenium webdriver.
 # Notes:
 # https://stackoverflow.com/questions/42478591/python-selenium-chrome-webdriver
 # https://stackoverflow.com/questions/35884230/can-my-webdriver-script-catch-a-event-from-the-webpage
@@ -10,6 +11,7 @@
 # https://selenium-python.readthedocs.io/api.html#module-selenium.webdriver.common.action_chains
 # https://www.freecodecamp.org/news/javascript-keycode-list-keypress-event-key-codes/
 
+
 # importing webdriver from selenium
 from selenium import webdriver
 import chromedriver_binary
@@ -18,78 +20,129 @@ from selenium.webdriver.support.events import EventFiringWebDriver, AbstractEven
 import json
 from selenium.webdriver.common.by import By
 
+import sys
+import json
 import time
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-
-# Command line argument parser.
-import argparse
+import re
 
 
-# delegate parsing task to argparse library.
-arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument("-recording", "--recording", default='null',
-                        help="recording must contain the name of the file that contain the recording to reproduce."
-                             + "WAPT-Dataset-Collector saves recording files in out/ folder.")
-args = arg_parser.parse_args()
+class Player(object):
+    keyValues = {'Backspace': Keys.BACKSPACE, 'Tab': Keys.TAB, 'Enter': Keys.ENTER, 'Shift': Keys.SHIFT,
+                 'Control': Keys.CONTROL, 'Alt': Keys.ALT, 'Pause': Keys.PAUSE, 'Escape': Keys.ESCAPE, ' ': Keys.SPACE,
+                 'PageUp': Keys.PAGE_UP, 'PageDown': Keys.PAGE_DOWN, 'End': Keys.END, 'Home': Keys.HOME,
+                 'ArrowLeft': Keys.ARROW_LEFT, 'ArrowUp': Keys.ARROW_UP, 'ArrowRight': Keys.ARROW_RIGHT,
+                 'ArrowDown': Keys.ARROW_DOWN, 'Insert': Keys.INSERT, 'Delete': Keys.DELETE}
 
-# dictionary that contains the JSON file r
-record_dict = {}
-# proceed only if -recording is not null, a recording to be reproduced must be provided.
-if args.recording != 'null':
-    try:
-        rec_file = open(args.recording, 'r')
-    except OSError:
-        print("Could not open/read file:", args.recording)
-        sys.exit()
+    # keyValues['CapsLock'] = not found
+    # keyValues['PrintScreen'] = not found
 
-    with rec_file:
-        # obtaining the json file as a dictionary.
-        record_dict = json.load(rec_file)
+    def __init__(self, rec_filename):
+        # using time_elapsed to execute actions at the same time of the original recording: time is expressed in ms.
+        self.time_elapsed = 0
 
-    # obtain window height and width to open a window of the same dimension opened during the recording.
-    window_height = record_dict.pop('window_height')
-    window_width = record_dict.pop('window_width')
+        self.session = {}
+        rec_file = None
+        # proceed only if -recording is not null, a recording to be reproduced must be provided.
+        try:
+            rec_file = open(rec_filename, 'r')
+        except OSError:
+            print("Could not open/read file:", rec_file)
+            sys.exit()
 
+        with rec_file:
+            # obtaining the json file as a dictionary.
+            self.session = json.load(rec_file)
 
-    chrome_options = webdriver.ChromeOptions()
-    # open Browser in maximized mode
-    #chrome_options.add_argument('start-maximized')
+        # instantiating webdriver and setting options.
+        chrome_options = webdriver.ChromeOptions()
+        # set window size as maximum size
+        # chrome_options.add_argument('start-maximized')
+        # set window size as the same used during the recording.
+        chrome_options.add_argument("--window-size=" + self.session.pop('window_width') + ","
+                                                     + self.session.pop('window_height'))
+        # set window position centered.
+        chrome_options.add_argument("--window-position=0,0")
 
-    # disabling infobars
-    chrome_options.add_argument("disable-infobars")
-    # workaround to avoid "selenium.common.exceptions.WebDriverException: DevToolsActivePort file doesn't exist"
-    chrome_options.add_argument("--remote-debugging-port=9028")
-    # disabling extensions
-    chrome_options.add_argument("--disable-extensions")
-    # overcome limited resource problems
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    # This is a workaround to avoid crashes: it bypasses OS security model.
-    chrome_options.add_argument("--no-sandbox")
+        # Default settings to avoid crashes during the chromedriver execution. (source: stackoverflow)
+        # disabling infobars
+        chrome_options.add_argument("disable-infobars")
+        # workaround to avoid "selenium.common.exceptions.WebDriverException: DevToolsActivePort file doesn't exist"
+        chrome_options.add_argument("--remote-debugging-port=8320")
+        # disabling extensions
+        chrome_options.add_argument("--disable-extensions")
+        # overcome limited resource problems
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        # This is a workaround to avoid crashes: it bypasses OS security model.
+        chrome_options.add_argument("--no-sandbox")
 
-    driver = webdriver.Chrome(options=chrome_options)
+        self.driver = webdriver.Chrome(options=chrome_options)
+        # the empty action_chain that will contain the sequence of action performed by the user.
+        self.action_chain = ActionChains(self.driver)
 
-    driver.set_window_position(0, 0)
-    driver.set_window_size(window_width, window_height)
+        # build the action chain.
+        # self.__build_action_chain()
 
-    for k, v in record_dict['transactions'].items():
-        curr_url = v['url']
-        print(curr_url)
-        for k2, v2 in v['actions'].items():
-            print(v2['action']['type'])
+    # this method gets as input parameter a dict called "action" and selects the correct action to add to the
+    # action_chain
+    def __add_action(self, action):
+        # since the actions are not performed one after the other immediately we need to consider the timing of each
+        # action.
+        ms_to_wait = action["time"] - self.time_elapsed
+        self.action_chain.pause(ms_to_wait / 1000)
+        self.time_elapsed = action["time"]
 
-            # TODO: check every action and add it to the ActionChains(driver) as in the comment below.
-            #       Use the list of key names to add the right Keys element when calling key_down, key_up, key_press.
+        if action["action"]["type"] == "keydown" or action["action"]["type"] == "keyup":
+            try:
+                key_up_down = self.keyValues[action["action"]["key"]]
+                if action["action"]["type"] == "keydown":
+                    self.action_chain.key_down(key_up_down)
+                else:
+                    self.action_chain.key_up(key_up_down)
+            except KeyError:
+                # if action["key"] is not present in the list of special keys supported by Selenium
+                # try to make the key_up/key_down action with the character itself.
+                #key_up_down = action["action"]["key"]
+                pass
 
+        elif action["action"]["type"] == "keypress":
+            self.action_chain.send_keys(action["action"]["key"])
+        elif action["action"]["type"] == "click" or action["action"]["type"] == "dbclick":
+            self.action_chain.move_by_offset(action["action"]["x"], action["action"]["y"])
+            if action["action"]["type"] == "click":
+                # TODO: check if it is necessary to reset the cursor position to solve the MoveTargetOutOfBoundException
+                self.action_chain.click().move_by_offset(-action["action"]["x"], -action["action"]["y"])
+            else:
+                self.action_chain.double_click()
 
+    def replay_actions(self):
+        for k, v in self.session['transactions'].items():
+            curr_url = v['url']
+            # since the container changes IP every time that the network is restarted and the 'penetration_net' has been
+            # designed to expose the benchmark container port even on localhost, we substitute the container IP ADDRESS
+            # with localhost. Without doing this we could not be able to reproduce a recording that has the benchmark
+            # IP ADDRESS that differs from the current benchmark IP ADDRESS.
+            curr_url = re.sub(r'\/\/\d*\.\d*\.\d*\.\d:', '//localhost:', curr_url)
+            # print(curr_url)
+            # add every action to the action_chain.
+            for k_action, v_action in v['actions'].items():
+                # print(v_action['action']['type'])
+                self.__add_action(v_action)
 
-    #driver.get('http://172.19.0.2:8080/wavsep/active/Reflected-XSS/RXSS-Detection-Evaluation-GET/Case02-Tag2TagScope.jsp?userinput=textvalue&record=true')
-    #ActionChains(driver).move_by_offset(92, 35).click().key_down(Keys.BACKSPACE).send_keys('c').pause(1).send_keys('i').send_keys('a').send_keys('o').perform()
+            # TODO: here we need a check to caption if the webpage has been navigated manually
+            #       as in the case of a Reflected XSS, or if it has been navigated just simply
+            #       by clicking some button or link.
+            if k != "1":
+                if self.driver.current_url != curr_url:
+                    self.driver.get(curr_url)
+            else:
+                self.driver.get(curr_url)
 
-    #time.sleep(10) # Pause to allow you to inspect the browser.
-    #driver.quit()
+            self.action_chain.perform()
+            self.action_chain.reset_actions()
 
-
-#driver.get("https://localhost:8888/wavsep/active/Reflected-XSS/RXSS-Detection-Evaluation-GET/Case03-Tag2TagStructure.jsp?userinput=textvalue")
-
+        # quit the driver after the action chain for every transaction has ended.
+        #time.sleep(5)
+        self.driver.quit()
