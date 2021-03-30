@@ -48,9 +48,9 @@ services:
     image: wavsep:latest
     restart: always
     ports:
-     - "8080:8080"
+      - "8080:8080"
     networks:
-     - penetration_net
+      - penetration_net
 
   # Damn Vulnerable Web Application.
   #benchmark:

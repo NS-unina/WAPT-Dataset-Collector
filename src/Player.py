@@ -80,7 +80,9 @@ class Player(object):
 
         self.driver = webdriver.Chrome(options=chrome_options)
         # the empty action_chain that will contain the sequence of action performed by the user.
-        self.action_chain = ActionChains(self.driver)
+        #self.action_chain = ActionChains(self.driver)
+
+        self.action_chain = None
 
         # build the action chain.
         # self.__build_action_chain()
@@ -113,22 +115,24 @@ class Player(object):
             self.action_chain.move_by_offset(action["action"]["x"], action["action"]["y"])
             if action["action"]["type"] == "click":
                 # TODO: check if it is necessary to reset the cursor position to solve the MoveTargetOutOfBoundException
-                self.action_chain.click().move_by_offset(-action["action"]["x"], -action["action"]["y"])
+                if action["action"]["x"] != 0 and action["action"]["y"] != 0:
+                    self.action_chain.click().move_by_offset(-action["action"]["x"], -action["action"]["y"])
             else:
                 self.action_chain.double_click()
 
     def replay_actions(self):
+        self.action_chain = ActionChains(self.driver)
         for k, v in self.session['transactions'].items():
             curr_url = v['url']
             # since the container changes IP every time that the network is restarted and the 'penetration_net' has been
             # designed to expose the benchmark container port even on localhost, we substitute the container IP ADDRESS
             # with localhost. Without doing this we could not be able to reproduce a recording that has the benchmark
             # IP ADDRESS that differs from the current benchmark IP ADDRESS.
-            curr_url = re.sub(r'\/\/\d*\.\d*\.\d*\.\d:', '//localhost:', curr_url)
-            # print(curr_url)
+            curr_url = re.sub(r'\/\/\d*\.\d*\.\d*\.\d', '//localhost', curr_url)
+            print(curr_url)
             # add every action to the action_chain.
             for k_action, v_action in v['actions'].items():
-                # print(v_action['action']['type'])
+                print(v_action['action']['type'])
                 self.__add_action(v_action)
 
             # TODO: here we need a check to caption if the webpage has been navigated manually
@@ -141,8 +145,8 @@ class Player(object):
                 self.driver.get(curr_url)
 
             self.action_chain.perform()
-            self.action_chain.reset_actions()
+            self.action_chain = ActionChains(self.driver)
 
         # quit the driver after the action chain for every transaction has ended.
-        #time.sleep(5)
+        time.sleep(5)
         self.driver.quit()
