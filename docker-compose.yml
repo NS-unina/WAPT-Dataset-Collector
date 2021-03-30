@@ -15,7 +15,7 @@ services:
    
    image: interceptor:latest
    # -bp must be equal to port exposed by the benchmark.
-   entrypoint: ["python3", "Interceptor.py", "--mode", "container", "-bp", "8080"]
+   entrypoint: ["python3", "Interceptor.py", "--mode", "container", "-bp", "80"]
 
    volumes:
      # uncomment to enable this container to contact the host system docker engine API.
@@ -39,28 +39,28 @@ services:
   # Benchmark
 
   # Uncomment following lines to use Wavsep as benchmark container.
-  benchmark:
-    container_name: benchmark
-    build:
-      context: .
-      dockerfile: docker/wavsep/Dockerfile
-
-    image: wavsep:latest
-    restart: always
-    ports:
-      - "8080:8080"
-    networks:
-      - penetration_net
-
-  # Damn Vulnerable Web Application.
   #benchmark:
   #  container_name: benchmark
-  #  image: vulnerables/web-dvwa
+  #  build:
+  #    context: .
+  #    dockerfile: docker/wavsep/Dockerfile
+  #
+  #  image: wavsep:latest
   #  restart: always
   #  ports:
-  #    - "80:80"
+  #    - "8080:8080"
   #  networks:
   #    - penetration_net
+
+  # Damn Vulnerable Web Application.
+  benchmark:
+    container_name: benchmark
+    image: vulnerables/web-dvwa
+    restart: always
+    ports:
+      - "80:80"
+    networks:
+      - penetration_net
 
   # Juice shop (OWASP)
   #benchmark:

@@ -62,7 +62,7 @@ class Player(object):
         # chrome_options.add_argument('start-maximized')
         # set window size as the same used during the recording.
         chrome_options.add_argument("--window-size=" + self.session.pop('window_width') + ","
-                                                     + self.session.pop('window_height'))
+                                    + self.session.pop('window_height'))
         # set window position centered.
         chrome_options.add_argument("--window-position=0,0")
 
@@ -79,13 +79,7 @@ class Player(object):
         chrome_options.add_argument("--no-sandbox")
 
         self.driver = webdriver.Chrome(options=chrome_options)
-        # the empty action_chain that will contain the sequence of action performed by the user.
-        #self.action_chain = ActionChains(self.driver)
-
         self.action_chain = None
-
-        # build the action chain.
-        # self.__build_action_chain()
 
     # this method gets as input parameter a dict called "action" and selects the correct action to add to the
     # action_chain
@@ -104,9 +98,6 @@ class Player(object):
                 else:
                     self.action_chain.key_up(key_up_down)
             except KeyError:
-                # if action["key"] is not present in the list of special keys supported by Selenium
-                # try to make the key_up/key_down action with the character itself.
-                #key_up_down = action["action"]["key"]
                 pass
 
         elif action["action"]["type"] == "keypress":
@@ -114,11 +105,13 @@ class Player(object):
         elif action["action"]["type"] == "click" or action["action"]["type"] == "dbclick":
             self.action_chain.move_by_offset(action["action"]["x"], action["action"]["y"])
             if action["action"]["type"] == "click":
-                # TODO: check if it is necessary to reset the cursor position to solve the MoveTargetOutOfBoundException
-                if action["action"]["x"] != 0 and action["action"]["y"] != 0:
-                    self.action_chain.click().move_by_offset(-action["action"]["x"], -action["action"]["y"])
+                self.action_chain.click()
             else:
                 self.action_chain.double_click()
+
+            # it is necessary to reset the cursor position to avoid the MoveTargetOutOfBoundException
+            if action["action"]["x"] != 0 and action["action"]["y"] != 0:
+                self.action_chain.move_by_offset(-action["action"]["x"], -action["action"]["y"])
 
     def replay_actions(self):
         self.action_chain = ActionChains(self.driver)
@@ -129,10 +122,8 @@ class Player(object):
             # with localhost. Without doing this we could not be able to reproduce a recording that has the benchmark
             # IP ADDRESS that differs from the current benchmark IP ADDRESS.
             curr_url = re.sub(r'\/\/\d*\.\d*\.\d*\.\d', '//localhost', curr_url)
-            print(curr_url)
             # add every action to the action_chain.
             for k_action, v_action in v['actions'].items():
-                print(v_action['action']['type'])
                 self.__add_action(v_action)
 
             # TODO: here we need a check to caption if the webpage has been navigated manually

@@ -17,15 +17,13 @@ arg_parser.add_argument("-recording", "--recording", default='null',
                              + "WAPT-Dataset-Collector saves recording files in out/ folder.")
 args = arg_parser.parse_args()
 
-# dictionary that contains the JSON file r
-record_dict = {}
+
 # proceed only if -recording is not null, a recording to be reproduced must be provided.
 if args.recording != 'null':
-    # TODO: implement following Player methods.
     player = Player(args.recording)
     player.replay_actions()
 else:
-    print("Error! You need to provide the path to the recording to replay!\n")
+    print("Error! You must  provide the path to the recording to replay!\n")
 
 
 
